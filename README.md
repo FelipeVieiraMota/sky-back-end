@@ -10,8 +10,7 @@ This project provides a unified architecture with:
 - **PostgreSQL databases**
 - **Docker Compose infrastructure**
 
-All services run through the gateway:
-
+Only User External Project Service and  Authentication Service run through the gateway:
 ```
 http://localhost:80
 ```
