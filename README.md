@@ -1,7 +1,6 @@
-# basic-default-project
+# Sky-back-end
 
-This project aims to be a **basic configuration foundation** for every Spring Boot microservice developed in this ecosystem.  
-It provides a unified architecture with:
+This project provides a unified architecture with:
 
 - **Eureka Server** for service discovery
 - **Spring Cloud Gateway** as the entry point
