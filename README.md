@@ -36,23 +36,7 @@ http://localhost/api/v1/authorization/swagger-ui/index.html#
 
 # 🏛 Architecture Overview
 
-```mermaid
-    Client --> Gateway
-
-    Gateway --> Auth[ms-authentication]
-    Gateway --> UserExternal[ms-user-external-project]
-
-    Auth --> PGAuth[(PostgreSQL - Auth DB)]
-    UserExternal --> PGUser[(PostgreSQL - User DB)]
-
-    Auth <-->|Service Discovery| Eureka
-    UserExternal <-->|Service Discovery| Eureka
-    Gateway <-->|Service Discovery| Eureka
-
-    Admin[Spring Boot Admin] <-->|Monitoring & Metrics| Auth
-    Admin <-->|Monitoring & Metrics| UserExternal
-    Admin <-->|Discovery| Eureka
-```
+![img_10.png](img_10.png)
 
 ---
 
