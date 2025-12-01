@@ -17,18 +17,6 @@ http://localhost:80
 
 ---
 
-## 🧪 Running Locally via IntelliJ
-
-If you plan to run any microservice locally (without Docker), enable the local profile by adding this VM option:
-
-```
--Dspring.profiles.active=local
-```
-
-This ensures each service loads its correct local configuration.
-
----
-
 ## 📘 Swagger Documentation (via Gateway)
 
 Use these URLs to access the Swagger UI for each microservice:
