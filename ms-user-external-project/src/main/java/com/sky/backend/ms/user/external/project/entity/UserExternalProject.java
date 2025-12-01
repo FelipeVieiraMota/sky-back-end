@@ -14,6 +14,7 @@ public class UserExternalProject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long projectId;
 
     @ManyToOne(optional = false)

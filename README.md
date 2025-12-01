@@ -188,6 +188,18 @@ docker-compose up --build
 └── README.md
 ```
 
+# 📁 Default user - Important!
+
+```
+    You can use this default user to login e generate tokens, or create your own user:
+    user: felipe
+    pass: 123
+```
+![img_6.png](img_6.png)
+![img_7.png](img_7.png)
+![img_8.png](img_8.png)
+![img_9.png](img_9.png)
+
 ---
 
 # ✔️ Prerequisites

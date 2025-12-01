@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface IExternalProjectMapper {
 
-    @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "projectId", target = "projectId")
     @Mapping(source = "name", target = "name")
     UserExternalProjectResponseDto toDto(UserExternalProject entity);
