@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: infra-analytics
+
+server:
+  port: 10000
+
+logging:
+  level:
+    com.netflix.discovery: TRACE
+    com.netflix.eureka: TRACE
+    org.springframework.cloud.netflix.eureka: TRACE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health.show-details: always

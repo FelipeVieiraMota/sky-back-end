@@ -1,0 +1,30 @@
+server:
+  port: 3000
+spring:
+  application:
+    name: ms-user-external-project
+
+logging:
+  level:
+    #org.springframework.cloud.gateway: TRACE
+    #com.netflix.discovery: TRACE
+    #com.netflix.eureka: TRACE
+    #org.springframework.cloud.netflix.eureka: TRACE
+    org.springframework.security: TRACE
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+content-type: application/json
+plus-hours: 2
+offset-id: -03:00
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:this_is_my_super_secure_secret_key_123!}

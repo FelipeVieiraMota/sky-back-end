@@ -1,0 +1,26 @@
+server:
+  port: 8761
+spring:
+  application:
+    name: infra-discovery
+
+logging:
+  level:
+    com.netflix.discovery: TRACE
+    com.netflix.eureka: TRACE
+    org.springframework.cloud.netflix.eureka: TRACE
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  instance:
+    prefer-ip-address: false
+    hostname: infra-discovery
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

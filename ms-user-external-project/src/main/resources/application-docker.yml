@@ -1,0 +1,49 @@
+# application-docker.yml
+spring:
+  boot:
+    admin:
+      client:
+        url: http://infra-analytics:10000
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://infra-discovery:8761/eureka/
+  instance:
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+    metadata-map:
+      management.context-path: /actuator
+
+  datasource:
+    url: jdbc:h2:mem:db_user;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# Here is 80 due to gateway's port
+springdoc:
+  details:
+    security-header: Authorization
+    description: Bearer + Token JWT
+    title: User External Project
+    version: v1
+    spring-doc-url: http://localhost:80
+  swagger-ui:
+    path: /api/v1/user-external-projects/swagger-ui.html
+    enabled: true
+    disable-swagger-default-url: true
+    url: /api/v1/user-external-projects/api-docs
+  api-docs:
+    path: /api/v1/user-external-projects/api-docs

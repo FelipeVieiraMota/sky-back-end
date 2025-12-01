@@ -1,0 +1,44 @@
+# application.yml
+server:
+  port: 80
+spring:
+  application:
+    name: infra-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Methods Access-Control-Allow-Headers RETAIN_FIRST
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: ms-user-external-project
+          uri: lb://ms-user-external-project
+          predicates:
+            - Path=/api/v1/user-external-projects/**
+
+        - id: ms-authorization
+          uri: lb://ms-authorization
+          predicates:
+            - Path=/api/v1/authorization/**
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    com.netflix.discovery: TRACE
+    com.netflix.eureka: TRACE
+    org.springframework.cloud.netflix.eureka: TRACE
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

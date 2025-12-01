@@ -1,0 +1,16 @@
+spring:
+  boot:
+    admin:
+      client:
+        url: http://infra-analytics:10000
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://infra-discovery:8761/eureka/
+  instance:
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+    metadata-map:
+      management.context-path: /actuator

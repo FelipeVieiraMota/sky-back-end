@@ -1,0 +1,28 @@
+spring:
+  boot:
+    admin:
+      client:
+        url: http://localhost:10000
+  cloud:
+    inetutils: # make the host chooser prefer loopback
+      preferred-networks:
+        - 127.0.0.1
+        - localhost
+      ignored-interfaces:
+        - utun.*                # VPN (macOS)
+        - awdl.*                # AirDrop (macOS)
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+  instance:
+    hostname: localhost         # <-- advertise localhost
+    prefer-ip-address: false    # <-- do NOT use detected IP
+    non-secure-port: 80
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+    metadata-map:
+      management.context-path: /actuator
