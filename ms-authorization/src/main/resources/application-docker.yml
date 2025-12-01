@@ -1,0 +1,32 @@
+# application-docker.yml
+spring:
+  boot:
+    admin:
+      client:
+        url: http://infra-analytics:10000
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://infra-discovery:8761/eureka/
+  instance:
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+    metadata-map:
+      management.context-path: /actuator
+
+springdoc:
+  details:
+    security-header: Authorization
+    description: Bearer + Token JWT
+    title: User authorization API
+    version: v1
+    spring-doc-url: http://localhost:80
+  swagger-ui:
+    path: /api/v1/authorization/swagger-ui.html
+    enabled: true
+    disable-swagger-default-url: true
+    url: /api/v1/authorization/api-docs
+  api-docs:
+    path: /api/v1/authorization/api-docs

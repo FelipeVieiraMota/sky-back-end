@@ -1,0 +1,40 @@
+# application-default.yml
+spring:
+  boot:
+    admin:
+      client:
+        url: http://localhost:10000
+  cloud:
+    inetutils: # make the host chooser prefer loopback
+      preferred-networks:
+        - 127.0.0.1
+        - localhost
+      ignored-interfaces:
+        - utun.*                # VPN (macOS)
+        - awdl.*                # AirDrop (macOS)
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+    metadata-map:
+      management.context-path: /actuator
+
+springdoc:
+  details:
+    security-header: Authorization
+    description: Bearer + Token JWT
+    title: User authorization API
+    version: v1
+    spring-doc-url: http://localhost:4000
+  swagger-ui:
+    path: /api/v1/authorization/swagger-ui.html
+    enabled: true
+    disable-swagger-default-url: true
+    url: /api/v1/authorization/api-docs
+  api-docs:
+    path: /api/v1/authorization/api-docs
