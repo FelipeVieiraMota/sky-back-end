@@ -31,15 +31,15 @@ server:
 api:
   security:
     token:
-      secret: ${JWT_SECRET:this_is_my_super_secure_secret_key_123!}
+      secret: ${JWT_SECRET:this_is_my_super_secure_secret_key_123_NOT_COOL_AT_ALL_MAYBE!}
 
-logging:
-  level:
-    org.springframework.security: TRACE
-    org.springframework.security.web.FilterChainProxy: TRACE
-    com.netflix.discovery: DEBUG
-    com.netflix.eureka: DEBUG
-    org.springframework.cloud.netflix.eureka: DEBUG
+#logging:
+#  level:
+#    org.springframework.security: TRACE
+#    org.springframework.security.web.FilterChainProxy: TRACE
+#    com.netflix.discovery: DEBUG
+#    com.netflix.eureka: DEBUG
+#    org.springframework.cloud.netflix.eureka: DEBUG
 
 content-type: application/json
 plus-hours: 0

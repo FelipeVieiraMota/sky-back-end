@@ -6,6 +6,7 @@ import com.sky.backend.authorization.domain.dto.UserDto;
 import com.sky.backend.authorization.domain.entity.User;
 import com.sky.backend.authorization.domain.mappers.IFetchMapper;
 import com.sky.backend.authorization.domain.mappers.IUserMapper;
+import com.sky.backend.authorization.exception.ForbiddenException;
 import com.sky.backend.authorization.exception.UserAlreadyExistsException;
 import com.sky.backend.authorization.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AuthorizationService implements UserDetailsService {
+public class UserService implements UserDetailsService {
 
     private final IUserRepository repository;
     private final IFetchMapper fetchMapper;
@@ -28,7 +29,11 @@ public class AuthorizationService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-        return repository.findByLogin(username);
+        UserDetails userDetails = repository.findByLogin(username);
+        if (userDetails == null){
+            throw new ForbiddenException("FORBIDDEN");
+        }
+        return userDetails;
     }
 
     public UserDto register(final RegisterDto data) {

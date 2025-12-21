@@ -28,12 +28,12 @@ spring:
           uri: lb://ms-authorization
           predicates:
             - Path=/api/v1/authorization/**
-logging:
-  level:
-    org.springframework.cloud.gateway: TRACE
-    com.netflix.discovery: TRACE
-    com.netflix.eureka: TRACE
-    org.springframework.cloud.netflix.eureka: TRACE
+#logging:
+#  level:
+#    org.springframework.cloud.gateway: TRACE
+#    com.netflix.discovery: TRACE
+#    com.netflix.eureka: TRACE
+#    org.springframework.cloud.netflix.eureka: TRACE
 management:
   endpoints:
     web:

@@ -3,7 +3,7 @@ package com.sky.backend.authorization.controller;
 import com.sky.backend.authorization.domain.dto.FetchUserDto;
 import com.sky.backend.authorization.domain.dto.RegisterDto;
 import com.sky.backend.authorization.domain.dto.UserDto;
-import com.sky.backend.authorization.service.AuthorizationService;
+import com.sky.backend.authorization.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final AuthorizationService authorizationService;
+    private final UserService userService;
 
     @GetMapping("/ping")
     public String pong(){
@@ -28,13 +28,13 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> register(@RequestBody @Valid RegisterDto data){
-        return ResponseEntity.ok().body(authorizationService.register(data));
+        return ResponseEntity.ok().body(userService.register(data));
     }
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUserById(@PathVariable String id){
-        authorizationService.deleteUserById(id);
+        userService.deleteUserById(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -44,12 +44,12 @@ public class UserController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(authorizationService.getAllUsers(page, size));
+        return ResponseEntity.ok(userService.getAllUsers(page, size));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FetchUserDto> findUserById(@PathVariable String id){
-        return ResponseEntity.ok().body(authorizationService.findUserById(id));
+        return ResponseEntity.ok().body(userService.findUserById(id));
     }
 }

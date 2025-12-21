@@ -1,15 +1,12 @@
 package com.sky.backend.authorization.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
-import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sky.backend.authorization.domain.dto.ErrorResponseDto;
 import com.sky.backend.authorization.domain.dto.UserDto;
-import com.sky.backend.authorization.exception.ForbiddenException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import com.sky.backend.authorization.domain.mappers.IUserMapper;
+import com.sky.backend.authorization.exception.TokenGenerationException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,21 +14,21 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Collection;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
-import static com.auth0.jwt.JWT.require;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 @Service
@@ -39,148 +36,159 @@ import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 @Slf4j
 public class JWTTokenService {
 
-    @Value("${content-type}")
+    @Value("${api.security.token.secret}")
+    private String secret;
+
+    @Value("${api.security.token.issuer:auth-api}")
+    private String issuer;
+
+    @Value("${plus-hours:0}")
+    private long plusHours;
+
+    @Value("${content-type:application/json}")
     private String contentType;
 
-    @Value("${plus-hours}")
-    private int plusHours;
+    private final ObjectMapper objectMapper;
+    private final IUserMapper mapper;
 
-    @Value("${offset-id}")
-    private String offSetId;
-
-    /*
-    * Use this method to validate JWT inside your API filter.
-    * */
+    /**
+     * Use this method to validate JWT inside your API filter.
+     */
     public void checkTokenRoles(
-        final String secret,
         final HttpServletRequest request,
         final HttpServletResponse response,
         final FilterChain filterChain
     ) throws IOException {
+
+        String token = recoverToken(request);
+
         try {
+            if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                Claims claims = extractClaims(token);
+                var authorities = extractAuthorities(claims);
+                var auth = new UsernamePasswordAuthenticationToken(
+                    claims.getSubject(),
+                    null,
+                    authorities
+                );
 
-            final var token = recoverToken(request);
-
-            if (token != null) {
-
-                final var claims = extractClaims(secret, token);
-
-                if (isTokenExpired(claims)) {
-                    throw new ForbiddenException("Forbidden");
-                }
-
-                final var roles = claims.get("roles", List.class);
-
-                final var authentication =
-                        authentication(claims, getAuthorities(roles));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
             filterChain.doFilter(request, response);
 
-        } catch (Exception exception) {
-            response.setStatus(SC_UNAUTHORIZED);
-            response.setContentType(contentType);
-            final var error = "UNAUTHORIZED";
-            final var message = "401 - Unauthorized access";
-            final var errorResponseDto = new ErrorResponseDto(
-                LocalDateTime.now(),
-                SC_UNAUTHORIZED,
-                error,
-                message
-            );
-            response.getWriter().write(errorResponseDto.toString());
-            log.error(exception.getMessage());
-            log.error(errorResponseDto.toString());
+        } catch (ExpiredJwtException e) {
+            log.warn("JWT expired: method={} path={} ip={}",
+                    request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
+            writeUnauthorized(response, "TOKEN_EXPIRED", "Token expired");
+
+        } catch (JwtException e) {
+            // inválido: assinatura, formato, etc.
+            log.warn("JWT invalid: method={} path={} ip={} msg={}",
+                    request.getMethod(), request.getRequestURI(), request.getRemoteAddr(), e.getMessage());
+            writeUnauthorized(response, "TOKEN_INVALID", "Invalid token");
+
+        } catch (Exception e) {
+            // erro inesperado (bug)
+            log.error("Unexpected auth error: method={} path={}",
+                    request.getMethod(), request.getRequestURI(), e);
+            writeUnauthorized(response, "UNAUTHORIZED", "Unauthorized access");
         }
     }
 
-    private UsernamePasswordAuthenticationToken authentication(Claims claims, List<SimpleGrantedAuthority> authorities) {
-        return new UsernamePasswordAuthenticationToken(claims.getSubject(), null, authorities);
-    }
-
-    private List<SimpleGrantedAuthority> getAuthorities(List<?> roles) {
-        return roles.stream().map(role -> new SimpleGrantedAuthority(role.toString())).toList();
-    }
-
-    public Claims extractClaims(final String secret, final String token) {
+    public String generateBearerToken(final UserDto dto) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (JwtException exception) {
-            log.error(exception.getMessage());
-            exception.printStackTrace();
-            throw new ForbiddenException("Forbidden");
+            return "Bearer " + generateToken(dto);
+        } catch (JsonProcessingException e) {
+            throw new TokenGenerationException("Failed to serialize token subject", e);
+        } catch (JwtException e) {
+            throw new TokenGenerationException("Failed to generate JWT", e);
+        } catch (Exception e) {
+            throw new TokenGenerationException("Unexpected error generating bearer token", e);
         }
     }
 
-    public boolean isTokenExpired(Claims claims) {
-        return claims.getExpiration().before(new Date());
+    /**
+     * Generates an access token for a subject with roles.
+     */
+    private String generateToken(final UserDto dto) throws JsonProcessingException {
+        Instant now = Instant.now();
+        String subject = dto.id();
+
+        return Jwts.builder()
+            .setIssuer(issuer)
+            .setSubject(subject)
+            .setIssuedAt(Date.from(now))
+            .setExpiration(Date.from(now.plus(plusHours, ChronoUnit.HOURS)))
+            .claim("roles", mapper.authorities(dto))
+            .claim("user", mapper.toNoPass(dto))
+            .signWith(
+                Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)),
+                SignatureAlgorithm.HS256
+            )
+            .compact();
     }
 
-    public String generateToken(final String secret, final UserDto user){
-        try{
-            final List<String> roles = getRoles(user);
-            final Algorithm algorithm = Algorithm.HMAC256(secret);
-            return JWT.create()
-                    .withIssuer("auth-api")
-                    .withSubject(user.login())
-                    .withClaim("roles", roles)
-                    .withExpiresAt(genExpirationDate())
-                    .sign(algorithm);
-        } catch (JWTCreationException exception) {
-            log.error(exception.getMessage());
-            exception.printStackTrace();
-            throw new ForbiddenException("Forbidden");
-        }
-    }
-
-    private List<String> getRoles(final UserDto user) {
-        final Collection<? extends GrantedAuthority> authorities = user.authorities(user.role());
-        return authorities.stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-    }
-
-    public String tokenSubject(final String secret, final String token){
+    public boolean validateToken(String token) {
         try {
-            return require(Algorithm.HMAC256(secret))
-                    .withIssuer("auth-api")
-                    .build()
-                    .verify(token)
-                    .getSubject();
-        } catch (JWTVerificationException exception){
-            log.error(exception.getMessage());
-            exception.printStackTrace();
-            throw new ForbiddenException("Forbidden");
-        }
-    }
-
-    public boolean validateToken(final String secret, final String token) {
-        try {
-            require(Algorithm.HMAC256(secret))
-                    .withIssuer("auth-api")
-                    .build()
-                    .verify(token);
+            extractClaims(token);
             return true;
-        } catch (JWTVerificationException exception) {
-            log.error(exception.getMessage());
-            exception.printStackTrace();
+        } catch (JwtException e) {
             return false;
         }
     }
 
-    private Instant genExpirationDate()  {
-        return LocalDateTime.now().plusHours(plusHours).toInstant(ZoneOffset.of(offSetId));
+    public String tokenSubject(String token) {
+        return extractClaims(token).getSubject();
     }
 
-    public String recoverToken(HttpServletRequest request){
-        var authHeader = request.getHeader("Authorization");
-        if(authHeader == null) return null;
-        return authHeader.replace("Bearer ", "");
+    private Claims extractClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .requireIssuer(issuer)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    private String recoverToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) return null;
+
+        String prefix = "Bearer ";
+        if (!authHeader.startsWith(prefix)) return null;
+
+        String token = authHeader.substring(prefix.length()).trim();
+        return token.isEmpty() ? null : token;
+    }
+
+    private List<SimpleGrantedAuthority> extractAuthorities(Claims claims) {
+        Object rolesObj = claims.get("roles");
+        if (rolesObj == null) return List.of();
+
+        if (rolesObj instanceof List<?> list) {
+            return list.stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .map(SimpleGrantedAuthority::new)
+                    .toList();
+        }
+
+        return List.of(new SimpleGrantedAuthority(rolesObj.toString()));
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String error, String message) throws IOException {
+        response.setStatus(SC_UNAUTHORIZED);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        var body = new ErrorResponseDto(
+                LocalDateTime.now(),
+                SC_UNAUTHORIZED,
+                error,
+                message
+        );
+
+        response.getWriter().write(objectMapper.writeValueAsString(body));
     }
 }
