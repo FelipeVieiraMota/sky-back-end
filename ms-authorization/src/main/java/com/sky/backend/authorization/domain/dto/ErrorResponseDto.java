@@ -1,5 +1,7 @@
 package com.sky.backend.authorization.domain.dto;
 
+import org.springframework.lang.NonNull;
+
 import java.time.LocalDateTime;
 
 public record ErrorResponseDto (
@@ -9,9 +11,10 @@ public record ErrorResponseDto (
     String message
 ) {
     @Override
+    @NonNull
     public String toString()
     {
-        final var message =
+        final var formattedText =
         """
             {
                 "timestamp": %s,
@@ -22,7 +25,7 @@ public record ErrorResponseDto (
         """;
         return String.format
         (
-            message,
+            formattedText,
             timestamp,
             status,
             error,

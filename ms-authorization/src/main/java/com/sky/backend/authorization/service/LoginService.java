@@ -2,6 +2,7 @@ package com.sky.backend.authorization.service;
 
 import com.sky.backend.authorization.domain.dto.AuthenticationDto;
 import com.sky.backend.authorization.domain.dto.TokenDto;
+import com.sky.backend.authorization.domain.dto.UserDto;
 import com.sky.backend.authorization.domain.entity.User;
 import com.sky.backend.authorization.domain.mappers.IUserMapper;
 import com.sky.backend.authorization.exception.ForbiddenException;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AuthenticationService {
+public class LoginService {
 
     private final AuthenticationManager authenticationManager;
     private final JWTTokenService tokenService;
@@ -26,11 +27,16 @@ public class AuthenticationService {
         try {
             final var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
             final var authenticate = this.authenticationManager.authenticate(usernamePassword);
-            final var dto = mapper.toDto((User) authenticate.getPrincipal());
-            return "Bearer " + tokenService.generateToken(secret, dto);
+            final var principal = (User) authenticate.getPrincipal();
+            final var dto = mapper.toDto(principal);
+            return generateToken(dto);
         } catch (Throwable throwable) {
             throw new ForbiddenException(throwable.getMessage());
         }
+    }
+
+    private String generateToken(UserDto dto) {
+        return "Bearer " + tokenService.generateToken(secret, dto);
     }
 
     public boolean validateToken(final TokenDto data) {

@@ -7,51 +7,52 @@ import com.sky.backend.authorization.domain.entity.User;
 import com.sky.backend.authorization.domain.mappers.IFetchMapper;
 import com.sky.backend.authorization.domain.mappers.IUserMapper;
 import com.sky.backend.authorization.exception.UserAlreadyExistsException;
-import jakarta.validation.Valid;
+import com.sky.backend.authorization.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 @RequiredArgsConstructor
 public class AuthorizationService implements UserDetailsService {
 
-    private final UserService service;
+    private final IUserRepository repository;
     private final IFetchMapper fetchMapper;
     private final IUserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return service.findByLogin(username);
+    public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
+        return repository.findByLogin(username);
     }
 
-    public UserDto register(@RequestBody @Valid RegisterDto data) {
+    public UserDto register(final RegisterDto data) {
 
-        final var user = service.findByLogin(data.login());
+        final var user = repository.findByLogin(data.login());
 
         if( user != null ) {
             throw new UserAlreadyExistsException();
         }
 
-        final String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
-        final User newUser = new User(data.login(), encryptedPassword, data.role());
-        return userMapper.toDto(service.save(newUser));
+        final var encryptedPassword = passwordEncoder.encode(data.password());
+        final var newUser = new User(data.login(), encryptedPassword, data.role());
+        return userMapper.toDto(repository.save(newUser));
     }
 
     public void deleteUserById(final String id) {
-        service.deleteUserById(id);
+        repository.deleteById(id);
     }
 
     public Page<FetchUserDto> getAllUsers(final int page, final int size) {
-        return service.getAllUsers(page, size).map(fetchMapper::toDto);
+        return repository.findAll(PageRequest.of(page, size)).map(fetchMapper::toDto);
     }
 
     public FetchUserDto findUserById(final String id) {
-        return fetchMapper.toDto(service.findUserById(id));
+        return fetchMapper.toDto(repository.findUserById(id));
     }
 }

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import static com.auth0.jwt.JWT.require;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 @Service
@@ -39,13 +40,13 @@ import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 public class JWTTokenService {
 
     @Value("${content-type}")
-    private String CONTENT_TYPE;
+    private String contentType;
 
     @Value("${plus-hours}")
-    private int PLUS_HOURS;
+    private int plusHours;
 
     @Value("${offset-id}")
-    private String OFF_SET_ID;
+    private String offSetId;
 
     /*
     * Use this method to validate JWT inside your API filter.
@@ -65,7 +66,7 @@ public class JWTTokenService {
                 final var claims = extractClaims(secret, token);
 
                 if (isTokenExpired(claims)) {
-                    throw new ForbiddenException("Not Allowed.");
+                    throw new ForbiddenException("Forbidden");
                 }
 
                 final var roles = claims.get("roles", List.class);
@@ -80,7 +81,7 @@ public class JWTTokenService {
 
         } catch (Exception exception) {
             response.setStatus(SC_UNAUTHORIZED);
-            response.setContentType(CONTENT_TYPE);
+            response.setContentType(contentType);
             final var error = "UNAUTHORIZED";
             final var message = "401 - Unauthorized access";
             final var errorResponseDto = new ErrorResponseDto(
@@ -112,7 +113,8 @@ public class JWTTokenService {
                     .getBody();
         } catch (JwtException exception) {
             log.error(exception.getMessage());
-            throw new RuntimeException("Token validation failed", exception);
+            exception.printStackTrace();
+            throw new ForbiddenException("Forbidden");
         }
     }
 
@@ -132,7 +134,8 @@ public class JWTTokenService {
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
             log.error(exception.getMessage());
-            throw new RuntimeException("Error while generating token", exception);
+            exception.printStackTrace();
+            throw new ForbiddenException("Forbidden");
         }
     }
 
@@ -145,33 +148,34 @@ public class JWTTokenService {
 
     public String tokenSubject(final String secret, final String token){
         try {
-            return JWT.require(Algorithm.HMAC256(secret))
+            return require(Algorithm.HMAC256(secret))
                     .withIssuer("auth-api")
                     .build()
                     .verify(token)
                     .getSubject();
         } catch (JWTVerificationException exception){
             log.error(exception.getMessage());
-            return "";
+            exception.printStackTrace();
+            throw new ForbiddenException("Forbidden");
         }
     }
 
     public boolean validateToken(final String secret, final String token) {
         try {
-            JWT.require(Algorithm.HMAC256(secret))
+            require(Algorithm.HMAC256(secret))
                     .withIssuer("auth-api")
                     .build()
                     .verify(token);
             return true;
         } catch (JWTVerificationException exception) {
             log.error(exception.getMessage());
+            exception.printStackTrace();
             return false;
         }
     }
 
     private Instant genExpirationDate()  {
-        // 2 -03:00
-        return LocalDateTime.now().plusHours(PLUS_HOURS).toInstant(ZoneOffset.of("-03:00"));
+        return LocalDateTime.now().plusHours(plusHours).toInstant(ZoneOffset.of(offSetId));
     }
 
     public String recoverToken(HttpServletRequest request){

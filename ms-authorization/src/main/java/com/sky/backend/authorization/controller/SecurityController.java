@@ -3,7 +3,7 @@ package com.sky.backend.authorization.controller;
 import com.sky.backend.authorization.domain.dto.AuthenticationDto;
 import com.sky.backend.authorization.domain.dto.LoginResponseDto;
 import com.sky.backend.authorization.domain.dto.TokenDto;
-import com.sky.backend.authorization.service.AuthenticationService;
+import com.sky.backend.authorization.service.LoginService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SecurityController {
 
-    private final AuthenticationService authenticationService;
+    private final LoginService loginService;
 
     @GetMapping("/ping")
     public String pong() {
@@ -25,13 +25,13 @@ public class SecurityController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid AuthenticationDto data){
-        return ResponseEntity.ok(new LoginResponseDto(authenticationService.login(data)));
+        return ResponseEntity.ok(new LoginResponseDto(loginService.login(data)));
     }
 
     @PostMapping("/token-validation")
     public ResponseEntity<Boolean> tokenValidation(@RequestBody TokenDto data) {
 
-        if(authenticationService.validateToken(data)) {
+        if(loginService.validateToken(data)) {
             return ResponseEntity.ok(true);
         }
 
