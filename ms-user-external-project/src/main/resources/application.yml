@@ -21,10 +21,10 @@ management:
       show-details: always
 
 content-type: application/json
-plus-hours: 2
-offset-id: -03:00
+plus-hours: 0
+offset-id: +00:00
 
 api:
   security:
     token:
-      secret: ${JWT_SECRET:this_is_my_super_secure_secret_key_123!}
+      secret: ${JWT_SECRET:this_is_my_super_secure_secret_key_123_NOT_COOL_AT_ALL_MAYBE!}
