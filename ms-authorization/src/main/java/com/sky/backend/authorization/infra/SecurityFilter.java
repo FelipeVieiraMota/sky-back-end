@@ -22,6 +22,6 @@ public class SecurityFilter extends OncePerRequestFilter {
         @NonNull final HttpServletResponse response,
         @NonNull final FilterChain filterChain
     ) throws IOException {
-        tokenService.checkTokenRoles(request, response, filterChain);
+        tokenService.processRequest(request, response, filterChain);
     }
 }

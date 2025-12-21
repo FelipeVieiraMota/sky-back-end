@@ -1,0 +1,54 @@
+services:
+
+  ms-authorization:
+    build: .
+    ports:
+      - "4000:4000"
+    networks: [backend]
+    depends_on:
+      postgres-for-authorization:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 4000
+      SPRING_APPLICATION_NAME: ms-authorization
+      # JWT (mapeia api.security.token.secret)
+      API_SECURITY_TOKEN_SECRET: r7N9f2XKQvW8Z4M3C1YB6sL0DkE5TnAUmPpHcJxFqR2o!
+      # Data BASE
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-for-authorization:5432/authorization_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      # Security
+      CONTENT_TYPE: APPLICATION/JSON
+      PLUS_HOURS: 1
+      OFFSET_ID: +00:00
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:4000/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres-for-authorization:
+    container_name: authorization-db-container
+    image: postgres:15
+    environment:
+      POSTGRES_DB: authorization_db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d authorization_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-for-authorization-volume:/var/lib/postgresql/data
+    networks: [backend]
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres-for-authorization-volume:

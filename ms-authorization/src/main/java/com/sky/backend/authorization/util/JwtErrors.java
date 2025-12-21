@@ -1,4 +1,4 @@
-package com.sky.backend.authorization.exception;
+package com.sky.backend.authorization.util;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

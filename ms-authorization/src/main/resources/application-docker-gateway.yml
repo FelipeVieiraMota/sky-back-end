@@ -1,24 +1,15 @@
-# application-default.yml
+# application-docker.yml
 spring:
   boot:
     admin:
       client:
-        url: http://localhost:10000
-        enabled: false
-  cloud:
-    inetutils: # make the host chooser prefer loopback
-      preferred-networks:
-        - 127.0.0.1
-        - localhost
-      ignored-interfaces:
-        - utun.*                # VPN (macOS)
-        - awdl.*                # AirDrop (macOS)
+        url: http://infra-analytics:10000
 eureka:
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://infra-discovery:8761/eureka/
   instance:
     status-page-url-path: /actuator/info
     health-check-url-path: /actuator/health
@@ -31,7 +22,7 @@ springdoc:
     description: Bearer + Token JWT
     title: User authorization API
     version: v1
-    spring-doc-url: http://localhost:4000
+    spring-doc-url: http://localhost:80
   swagger-ui:
     path: /api/v1/authorization/swagger-ui.html
     enabled: true

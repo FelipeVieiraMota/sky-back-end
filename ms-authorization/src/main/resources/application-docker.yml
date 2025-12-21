@@ -22,7 +22,7 @@ springdoc:
     description: Bearer + Token JWT
     title: User authorization API
     version: v1
-    spring-doc-url: http://localhost:80
+    spring-doc-url: http://localhost:4000
   swagger-ui:
     path: /api/v1/authorization/swagger-ui.html
     enabled: true

@@ -18,6 +18,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
@@ -49,7 +51,7 @@ public class UserService implements UserDetailsService {
         return userMapper.toDto(repository.save(newUser));
     }
 
-    public void deleteUserById(final String id) {
+    public void deleteUserById(final UUID id) {
         repository.deleteById(id);
     }
 
@@ -57,7 +59,7 @@ public class UserService implements UserDetailsService {
         return repository.findAll(PageRequest.of(page, size)).map(fetchMapper::toDto);
     }
 
-    public FetchUserDto findUserById(final String id) {
+    public FetchUserDto findUserById(final UUID id) {
         return fetchMapper.toDto(repository.findUserById(id));
     }
 }

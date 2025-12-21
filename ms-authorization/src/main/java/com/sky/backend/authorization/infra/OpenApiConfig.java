@@ -41,18 +41,18 @@ public class OpenApiConfig {
 
     private Components getComponents() {
         return new Components().addSecuritySchemes (
-                AUTHORIZATION,
-                getAuthorization()
+            AUTHORIZATION,
+            getAuthorization()
         );
     }
 
     private SecurityScheme getAuthorization() {
 
         return new SecurityScheme()
-                .type(SecurityScheme.Type.APIKEY)
-                .in(SecurityScheme.In.HEADER)
-                .name(AUTHORIZATION)
-                .description(DESCRIPTION);
+            .type(SecurityScheme.Type.APIKEY)
+            .in(SecurityScheme.In.HEADER)
+            .name(AUTHORIZATION)
+            .description(DESCRIPTION);
     }
 
     private SecurityRequirement getSecurityRequirements(final String ...requirements) {

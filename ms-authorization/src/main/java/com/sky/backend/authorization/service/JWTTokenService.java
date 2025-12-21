@@ -54,13 +54,13 @@ public class JWTTokenService {
     /**
      * Use this method to validate JWT inside your API filter.
      */
-    public void checkTokenRoles(
+    public void processRequest (
         final HttpServletRequest request,
         final HttpServletResponse response,
         final FilterChain filterChain
     ) throws IOException {
 
-        String token = recoverToken(request);
+        final String token = recoverToken(request);
 
         try {
             if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -77,21 +77,31 @@ public class JWTTokenService {
 
             filterChain.doFilter(request, response);
 
-        } catch (ExpiredJwtException e) {
-            log.warn("JWT expired: method={} path={} ip={}",
-                    request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
+        } catch (ExpiredJwtException exception) {
+            log.warn (
+                "JWT expired: method={} path={} ip={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getRemoteAddr()
+            );
             writeUnauthorized(response, "TOKEN_EXPIRED", "Token expired");
-
-        } catch (JwtException e) {
-            // inválido: assinatura, formato, etc.
-            log.warn("JWT invalid: method={} path={} ip={} msg={}",
-                    request.getMethod(), request.getRequestURI(), request.getRemoteAddr(), e.getMessage());
+        } catch (JwtException exception) {
+            log.warn (
+                "JWT invalid: method={} path={} ip={} msg={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getRemoteAddr(),
+                exception.getMessage()
+            );
             writeUnauthorized(response, "TOKEN_INVALID", "Invalid token");
 
-        } catch (Exception e) {
-            // erro inesperado (bug)
-            log.error("Unexpected auth error: method={} path={}",
-                    request.getMethod(), request.getRequestURI(), e);
+        } catch (Exception exception) {
+            log.error (
+                "Unexpected auth error: method={} path={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                exception
+            );
             writeUnauthorized(response, "UNAUTHORIZED", "Unauthorized access");
         }
     }
@@ -108,9 +118,6 @@ public class JWTTokenService {
         }
     }
 
-    /**
-     * Generates an access token for a subject with roles.
-     */
     private String generateToken(final UserDto dto) throws JsonProcessingException {
         Instant now = Instant.now();
         String subject = dto.id();
