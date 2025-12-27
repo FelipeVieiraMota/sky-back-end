@@ -138,18 +138,33 @@ public class JWTTokenService {
 
     public boolean validateToken(String token) {
         try {
+            token = filterToken(token);
+
+            if (token == null || token.isBlank()){
+                log.error("Token is empty: {}", token);
+                return false;
+            }
             extractClaims(token);
             return true;
         } catch (JwtException e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            log.error("Token {}", token);
             return false;
         }
     }
 
-    public String tokenSubject(String token) {
-        return extractClaims(token).getSubject();
+    private String filterToken(String token) {
+        final var prefix = "Bearer ";
+
+        if (token.startsWith(prefix)) {
+            token = token.split(prefix)[1];
+        }
+
+        return token;
     }
 
-    private Claims extractClaims(String token) {
+    private Claims extractClaims(final String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                 .requireIssuer(issuer)
@@ -158,33 +173,39 @@ public class JWTTokenService {
                 .getBody();
     }
 
-    private String recoverToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
+    private String recoverToken(final HttpServletRequest request) {
+        final var authHeader = request.getHeader("Authorization");
         if (authHeader == null) return null;
 
-        String prefix = "Bearer ";
+        final var prefix = "Bearer ";
         if (!authHeader.startsWith(prefix)) return null;
 
-        String token = authHeader.substring(prefix.length()).trim();
+        final var token = authHeader.substring(prefix.length()).trim();
         return token.isEmpty() ? null : token;
     }
 
-    private List<SimpleGrantedAuthority> extractAuthorities(Claims claims) {
-        Object rolesObj = claims.get("roles");
+    private List<SimpleGrantedAuthority> extractAuthorities(final Claims claims) {
+
+        final var  rolesObj = claims.get("roles");
         if (rolesObj == null) return List.of();
 
         if (rolesObj instanceof List<?> list) {
             return list.stream()
-                    .filter(Objects::nonNull)
-                    .map(Object::toString)
-                    .map(SimpleGrantedAuthority::new)
-                    .toList();
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
         }
 
         return List.of(new SimpleGrantedAuthority(rolesObj.toString()));
     }
 
-    private void writeUnauthorized(HttpServletResponse response, String error, String message) throws IOException {
+    private void writeUnauthorized (
+        final HttpServletResponse response,
+        final String error,
+        final String message
+    ) throws IOException {
+
         response.setStatus(SC_UNAUTHORIZED);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

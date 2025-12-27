@@ -31,8 +31,8 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-        UserDetails userDetails = repository.findByLogin(username);
-        if (userDetails == null){
+        final var userDetails = repository.findByLogin(username);
+        if (userDetails == null) {
             throw new ForbiddenException("FORBIDDEN");
         }
         return userDetails;
@@ -43,7 +43,7 @@ public class UserService implements UserDetailsService {
         final var user = repository.findByLogin(data.login());
 
         if( user != null ) {
-            throw new UserAlreadyExistsException();
+            throw new ForbiddenException("FORBIDDEN");
         }
 
         final var encryptedPassword = passwordEncoder.encode(data.password());

@@ -34,6 +34,7 @@ api:
   security:
     token:
       secret: ${JWT_SECRET:r7N9f2XKQvW8Z4M3C1YB6sL0DkE5TnAUmPpHcJxFqR2o!}
+      issuer: ms-authorization
 
 logging:
   level:
